@@ -1,6 +1,9 @@
 from pieces import *
+from game import Game
 
-WHITE_BACK_ROW = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
+BACK_ROW = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
+CODES = ['r','n','b','q','k','b','n','r']
+
 
 class Square:
     x_cords = None
@@ -18,18 +21,19 @@ class Square:
 
 class Board:
     squares = []
+    pieces = []
 
     def __init__(self,game):
         self.squares = [[Square(column, row, False, None) for row in range(1,8+1)] for column in range(1,8+1)]
-        
 
-        white_pawn_1 = Pawn(1,2,"White",self,game)
-        white_pawn_1 = Pawn(1,2,"White",self,game)
-        white_pawn_1 = Pawn(1,2,"White",self,game)
-        white_pawn_1 = Pawn(1,2,"White",self,game)
-        white_pawn_1 = Pawn(1,2,"White",self,game)
-        white_pawn_1 = Pawn(1,2,"White",self,game)
-        white_pawn_1 = Pawn(1,2,"White",self,game)
+        for color, back_row, pawn_row in [("white",0,1),("black",7,6)]: #list indices
+            for column, piece_class in enumerate(BACK_ROW):
+                self.squares[column][back_row].piece = piece_class(column+1, back_row+1, color, self, game, f"{color[0]}_{CODES[column]}{"_1" if column<3 else "_2" if column>4 else ""}")
+                self.pieces.append(self.squares[column][back_row].piece)
+            
+            for column in range(0,8):
+                 self.squares[column][pawn_row].piece = Pawn(column+1, pawn_row+1, color, self, game, f"{color[0]}_p_{column+1}")
+                 self.pieces.append(self.squares[column][pawn_row].piece)
 
     def place_piece(self, x, y, piece):
         self.squares[x-1][y-1].has_piece = True
@@ -39,14 +43,28 @@ class Board:
         self.squares[x-1][y-1].has_piece = False
         self.squares[x-1][y-1].piece = None
 
-    def display(self):
-        for r in range(8):
-            for c in range(8):
-                print(f"{self.squares[c][7-r].x_cords}{self.squares[c][7-r].y_cords} ", end="")
-            print("\n")
-        print ("\n")
+    def display_board(self):
+        counter = 0
+        for j in range(8):
+            for i in range(8):
+                print(" ", end="")
+                if self.squares[i][7-j].has_piece:
+                    print(self.squares[i][7-j].piece.name, end="")
+                else:    
+                    print(f"{chr(ord('A')-1+self.squares[i][7-j].x_cords)}{self.squares[i][7-j].y_cords}", end="")
+                counter+=1
+                if counter ==8:
+                    print("\n", end="")
+                    counter =0
+        print("\n")
 
-        for r in range(8):
-                for c in range(8):
-                    print(f"{c}{7-r} ", end="")
-                print("\n")
+
+game=Game()
+board = Board(game)
+
+#print(board.squares[0][0].piece)
+#board.squares[1][0].piece.display_moves_graphical()
+board.display_board()
+
+for p in board.pieces:
+    print(p.code +" ",end="")

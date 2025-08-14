@@ -1,10 +1,11 @@
-from grid import Square
-from grid import Board
-from game import Game
+#from grid import Square
+#from grid import Board
+#from game import Game
 
 __all__ = ["Pawn", "Knight","Rook", "Bishop", "Queen", "King"]
 
 # !only change turn if move goes through
+# !count moves
 
 
 BISHOP_FACTORS = [ (-1,1), (-1,-1), (1,-1), (1,1)] 
@@ -21,14 +22,16 @@ class Piece:
     available_squares =[]
     color = None
     board = None
-    is_captured = False 
+    is_captured = False
+    code = None #to be able to reference indivdual pieces without position
 
-    def __init__(self, x, y, color, board, game):
+    def __init__(self, x, y, color, board, game, code):
         self.square = board.squares[x-1][y-1] #Square object
         self.color = color
         self.board = board
         self.board.place_piece(x,y,self)
         self.game = game
+        self.code = code
 
     def move_piece(self,to_x, to_y): #with capturing funcitonality
         for s in self.available_squares:
@@ -105,7 +108,7 @@ class Piece:
 
 class Knight(Piece):
     VALUE = 3
-    name = "Kn"
+    name = "Kn" #only for display purposes
 
     def moves(self):
         super().get_unblockable_moves(KNIGHT_OFFSETS)
@@ -147,8 +150,8 @@ class Pawn(Piece):
     orientation = None
     enpassant_move = (0,0)
 
-    def __init__(self, x, y, color, board,game):
-        super().__init__(x, y, color, board,game)
+    def __init__(self, x, y, color, board, game,code):
+        super().__init__(x, y, color, board, game,code)
         self.orientation = 1 if color == "white" else -1  #board orientation for black vs white movement
 
     def pawn_capturing_moves(self, direction): #1 for right and -1 for left
@@ -196,28 +199,4 @@ class Pawn(Piece):
                 self.board.squares[to_x-1][to_y-self.orientation-1].piece.is_captured = True
                 self.board.squares[to_x-1][to_y-self.orientation-1].piece.square = None
                 self.board.remove_piece(to_x, to_y - self.orientation)
-
-
-    # *en passant
     # *promotion
-
-game=Game()
-board = Board()
-#knight = Knight(5,3, "white", board)
-#knight1 = Knight(5,2, "white", board)
-#bishop = Bishop(3,1,"white", board)
-queen = Queen(3,6,"white",board,game)
-rook = Rook(2,6,"white",board,game)
-rook1 = Rook(3,4,"black",board,game)
-#king = King(5,1,"white",board)
-pawn = Pawn(5,5,"white",board,game)
-pawn1 = Pawn(6,5,"black",board,game)
-
-pawn.has_moved = True
-pawn.display_moves_graphical()
-pawn.moves()
-pawn.move_piece(6,6)
-pawn.display_moves_graphical()
-
-
-
