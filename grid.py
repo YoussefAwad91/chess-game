@@ -1,17 +1,12 @@
 from pieces import *
-from game import Game
+
+# todo: can include different back_row for 960 format
 
 BACK_ROW = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
 CODES = ['r','n','b','q','k','b','n','r']
 
 
 class Square:
-    x_cords = None
-    y_cords = None
-    has_piece = False
-    piece_color = None
-    piece = None
-
     def __init__(self, x, y, has_piece, piece=None):
         self.x_cords = x
         self.y_cords = y
@@ -20,10 +15,8 @@ class Square:
 
 
 class Board:
-    squares = []
-    pieces = []
-
     def __init__(self,game):
+        self.pieces = []
         self.squares = [[Square(column, row, False, None) for row in range(1,8+1)] for column in range(1,8+1)]
 
         for color, back_row, pawn_row in [("white",0,1),("black",7,6)]: #list indices
@@ -38,10 +31,17 @@ class Board:
     def place_piece(self, x, y, piece):
         self.squares[x-1][y-1].has_piece = True
         self.squares[x-1][y-1].piece = piece
+        piece.square = self.squares[x-1][y-1]
+
     
     def remove_piece(self,x,y):
         self.squares[x-1][y-1].has_piece = False
         self.squares[x-1][y-1].piece = None
+
+    def get_piece(self,code):
+        for p in self.pieces:
+            if code == p.code:
+                return p
 
     def display_board(self):
         counter = 0
@@ -51,20 +51,9 @@ class Board:
                 if self.squares[i][7-j].has_piece:
                     print(self.squares[i][7-j].piece.name, end="")
                 else:    
-                    print(f"{chr(ord('A')-1+self.squares[i][7-j].x_cords)}{self.squares[i][7-j].y_cords}", end="")
+                    print(f"{chr(ord('a')-1+self.squares[i][7-j].x_cords)}{self.squares[i][7-j].y_cords}", end="")
                 counter+=1
                 if counter ==8:
                     print("\n", end="")
                     counter =0
         print("\n")
-
-
-game=Game()
-board = Board(game)
-
-#print(board.squares[0][0].piece)
-#board.squares[1][0].piece.display_moves_graphical()
-board.display_board()
-
-for p in board.pieces:
-    print(p.code +" ",end="")
