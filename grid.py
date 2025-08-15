@@ -1,10 +1,9 @@
 from pieces import *
+from constants import *
+
+BACK_ROW = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook] # for creating pieces
 
 # todo: can include different back_row for 960 format
-
-BACK_ROW = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
-CODES = ['r','n','b','q','k','b','n','r']
-
 
 class Square:
     def __init__(self, x, y, has_piece, piece=None):
@@ -49,7 +48,7 @@ class Board:
             for i in range(8):
                 print(" ", end="")
                 if self.squares[i][7-j].has_piece:
-                    print(self.squares[i][7-j].piece.name, end="")
+                    print(self.squares[i][7-j].piece.icon, end="")
                 else:    
                     print(f"{chr(ord('a')-1+self.squares[i][7-j].x_cords)}{self.squares[i][7-j].y_cords}", end="")
                 counter+=1

@@ -1,16 +1,9 @@
+from constants import *
+
 __all__ = ["Pawn", "Knight","Rook", "Bishop", "Queen", "King"]
 
 # todo: only change turn if move goes through
 # todo: count moves
-
-
-BISHOP_FACTORS = [ (-1,1), (-1,-1), (1,-1), (1,1)] 
-ROOK_FACTORS = [(0,1), (-1,0), (0,-1), (1,0)]
-KNIGHT_OFFSETS = [(1,2), (2,1), (-2,1), (2,-1), (-2,-1), (-1,-2), (1,-2), (-1,2)]
-KING_OFFSETS = [(0,1), (-1,1), (-1,0), (-1,-1), (0,-1), (1,-1), (1,0), (1,1)]
-PAWN_OFFSET = [(0,1),(0,2)]
-REVERSED_PAWN_OFFSET = [(0,-1),(0,-2)] #for black pawns - only piece where movement has certain direction
-
 
 class Piece:  
 
@@ -87,7 +80,7 @@ class Piece:
                 if self.board.squares[i][7-j] in self.available_squares:
                     print("O ", end="")
                 elif self.board.squares[i][7-j].has_piece:
-                    print(self.board.squares[i][7-j].piece.name, end="")
+                    print(self.board.squares[i][7-j].piece.icon, end="")
                 else:    
                     print(f"{chr(ord('A')-1+self.board.squares[i][7-j].x_cords)}{self.board.squares[i][7-j].y_cords}", end="")
                 counter+=1
@@ -103,18 +96,19 @@ class Knight(Piece):
 
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
-        self.name = "♘ " if color == "white" else "♞ "
+        self.icon = "♘ " if color == "white" else "♞ "
+        self.image_path = WHITE_KNIGHT if color == "white" else BLACK_KNIGHT
 
     def moves(self):
         super().get_unblockable_moves(KNIGHT_OFFSETS)
 
 class Bishop(Piece):
     VALUE = 3
-    name = "B "
 
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
-        self.name = "♗ " if color == "white" else "♝ "
+        self.icon = "♗ " if color == "white" else "♝ "
+        self.image_path = WHITE_BISHOP if color == "white" else BLACK_BISHOP
 
     def moves(self):
         super().get_blockable_moves(BISHOP_FACTORS)
@@ -124,7 +118,8 @@ class Rook(Piece):
 
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
-        self.name = "♖ " if color == "white" else "♜ "
+        self.icon = "♖ " if color == "white" else "♜ "
+        self.image_path = WHITE_ROOK if color == "white" else BLACK_ROOK
 
     def moves(self):
         super().get_blockable_moves(ROOK_FACTORS)
@@ -134,7 +129,8 @@ class Queen(Piece):
 
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
-        self.name = "♕ " if color == "white" else "♛ "
+        self.icon = "♕ " if color == "white" else "♛ "
+        self.image_path = WHITE_PAWN if color == "white" else BLACK_PAWN
 
     def moves(self):
         super().get_blockable_moves(BISHOP_FACTORS+ROOK_FACTORS)
@@ -144,7 +140,8 @@ class King(Piece):
 
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
-        self.name = "♔ " if color == "white" else "♚ "
+        self.icon = "♔ " if color == "white" else "♚ "
+        self.image_path = WHITE_KING if color == "white" else BLACK_KING
 
     def moves(self):
         super().get_unblockable_moves(KING_OFFSETS)
@@ -155,12 +152,14 @@ class Pawn(Piece):
     
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
+        self.icon = "♙ " if self.color == "white" else "♟ "
+        self.image_path = WHITE_PAWN if color == "white" else Pawn
+
         self.orientation = 1 if color == "white" else -1  #board orientation for black vs white movement
         self.has_moved = False
         self.promoted_piece = None
         self.first_move = 0
         self.enpassant_move = (0,0)
-        self.name = "♙ " if self.color == "white" else "♟ "
 
     def pawn_capturing_moves(self, direction): #1 for right and -1 for left
         if self.square_inbounds(self.square.x_cords+direction,self.square.y_cords+self.orientation):
@@ -175,8 +174,6 @@ class Pawn(Piece):
                             self.available_squares.append(self.board.squares[self.square.x_cords+direction-1][self.square.y_cords+self.orientation-1])
                             self.enpassant_move = (self.square.x_cords+direction,self.square.y_cords+self.orientation)
             # if y==5 or y==4 for black and pawn that just moved to right or left can capture enpassant
-
-
 
     def moves(self):
         #self.orientation
