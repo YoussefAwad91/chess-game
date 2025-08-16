@@ -78,11 +78,11 @@ class Piece:
             for i in range(8):
                 print(" ", end="")
                 if self.board.squares[i][7-j] in self.available_squares:
-                    print("O ", end="")
+                    print("● ", end="")
                 elif self.board.squares[i][7-j].has_piece:
                     print(self.board.squares[i][7-j].piece.icon, end="")
                 else:    
-                    print(f"{chr(ord('A')-1+self.board.squares[i][7-j].x_cords)}{self.board.squares[i][7-j].y_cords}", end="")
+                    print(f"{chr(ord('a')-1+self.board.squares[i][7-j].x_cords)}{self.board.squares[i][7-j].y_cords}", end="")
                 counter+=1
                 if counter ==8:
                     print("\n", end="")
@@ -97,7 +97,7 @@ class Knight(Piece):
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
         self.icon = "♘ " if color == "white" else "♞ "
-        self.image_path = WHITE_KNIGHT if color == "white" else BLACK_KNIGHT
+        self.piece_path = WHITE_KNIGHT if color == "white" else BLACK_KNIGHT
 
     def moves(self):
         super().get_unblockable_moves(KNIGHT_OFFSETS)
@@ -108,7 +108,7 @@ class Bishop(Piece):
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
         self.icon = "♗ " if color == "white" else "♝ "
-        self.image_path = WHITE_BISHOP if color == "white" else BLACK_BISHOP
+        self.piece_path = WHITE_BISHOP if color == "white" else BLACK_BISHOP
 
     def moves(self):
         super().get_blockable_moves(BISHOP_FACTORS)
@@ -119,7 +119,7 @@ class Rook(Piece):
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
         self.icon = "♖ " if color == "white" else "♜ "
-        self.image_path = WHITE_ROOK if color == "white" else BLACK_ROOK
+        self.piece_path = WHITE_ROOK if color == "white" else BLACK_ROOK
 
     def moves(self):
         super().get_blockable_moves(ROOK_FACTORS)
@@ -130,7 +130,7 @@ class Queen(Piece):
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
         self.icon = "♕ " if color == "white" else "♛ "
-        self.image_path = WHITE_PAWN if color == "white" else BLACK_PAWN
+        self.piece_path = WHITE_QUEEN if color == "white" else BLACK_QUEEN
 
     def moves(self):
         super().get_blockable_moves(BISHOP_FACTORS+ROOK_FACTORS)
@@ -141,7 +141,7 @@ class King(Piece):
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
         self.icon = "♔ " if color == "white" else "♚ "
-        self.image_path = WHITE_KING if color == "white" else BLACK_KING
+        self.piece_path = WHITE_KING if color == "white" else BLACK_KING
 
     def moves(self):
         super().get_unblockable_moves(KING_OFFSETS)
@@ -153,7 +153,7 @@ class Pawn(Piece):
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
         self.icon = "♙ " if self.color == "white" else "♟ "
-        self.image_path = WHITE_PAWN if color == "white" else Pawn
+        self.piece_path = WHITE_PAWN if color == "white" else BLACK_PAWN
 
         self.orientation = 1 if color == "white" else -1  #board orientation for black vs white movement
         self.has_moved = False
@@ -166,11 +166,12 @@ class Pawn(Piece):
             if (self.board.squares[self.square.x_cords+direction-1][self.square.y_cords+self.orientation-1].has_piece) and (self.board.squares[self.square.x_cords+direction-1][self.square.y_cords+self.orientation-1].piece.color != self.color):
                 self.available_squares.append(self.board.squares[self.square.x_cords+direction-1][self.square.y_cords+self.orientation-1]) #normal capture
                 return
-        if self.square.y_cords == (5 if self.orientation else 4): #enpassant capture
+        
+        if self.square.y_cords == (5 if self.color == "white" else 4): #enpassant capture
             if self.square_inbounds(self.square.x_cords+direction, self.square.y_cords + self.orientation):
                 if (self.board.squares[self.square.x_cords+direction-1][self.square.y_cords-1].has_piece) and (self.board.squares[self.square.x_cords+direction-1][self.square.y_cords-1].piece.color != self.color):
                     if isinstance(self.board.squares[self.square.x_cords+direction-1][self.square.y_cords-1].piece, Pawn):
-                        if (self.board.squares[self.square.x_cords+direction-1][self.square.y_cords-1]).piece.first_move==self.game.move_number:
+                        if (self.board.squares[self.square.x_cords+direction-1][self.square.y_cords-1]).piece.first_move==self.game.move_number-1:
                             self.available_squares.append(self.board.squares[self.square.x_cords+direction-1][self.square.y_cords+self.orientation-1])
                             self.enpassant_move = (self.square.x_cords+direction,self.square.y_cords+self.orientation)
             # if y==5 or y==4 for black and pawn that just moved to right or left can capture enpassant

@@ -5,6 +5,10 @@
 ###### image asset paths #######
 WHITE_SQUARE = "assets/squares/white_square.svg"
 BLACK_SQUARE = "assets/squares/black_square.svg"
+OVERLAY = "assets/squares/overlay.svg"
+
+##### overlay scaling ########
+OVERLAY_SCALE = 0.4
 
 WHITE_PAWN   = "assets/pieces/white_pawn.svg"
 WHITE_ROOK   = "assets/pieces/white_rook.svg"

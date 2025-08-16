@@ -1,37 +1,95 @@
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
-from PyQt6.QtSvg import *
+from PyQt6.QtSvg import * 
 
 from constants import *
+from game import *
 
 class GuiSquare(QWidget):
-    def __init__(self, path, x_cords, y_cords):
+    def __init__(self, x_cords, y_cords, game, gui_squares):
         super().__init__()
-
-        self.renderer = QSvgRenderer(path)
 
         self.x_cords = x_cords
         self.y_cords = y_cords
-    
+
+
+        self.game = game
+        self.square = self.game.board.squares[self.x_cords-1][self.y_cords-1]
+        self.gui_squares = gui_squares
+
+        self.square_renderer = QSvgRenderer(WHITE_SQUARE if (self.x_cords+self.y_cords)%2!=0 else BLACK_SQUARE)
+        self.piece_renderer = None
+        self.overlay_renderer = None # for possible moves - reset after clicking on something else for all squares
+
     def paintEvent(self, event):
+        if self.square.has_piece and not self.square.piece.is_captured:
+            self.piece_renderer = QSvgRenderer(self.square.piece.piece_path)
+        else:
+            self.piece_renderer = None
+        self.overlay_rectangle = QRectF(self.width()*(1-OVERLAY_SCALE)/2, self.height()*(1-OVERLAY_SCALE)/2, self.width()*OVERLAY_SCALE, self.height()*OVERLAY_SCALE)
         painter = QPainter(self)
-        self.renderer.render(painter)
+        self.square_renderer.render(painter)
+        if self.piece_renderer:
+            self.piece_renderer.render(painter)
+        if self.overlay_renderer:
+            self.overlay_renderer.render(painter, self.overlay_rectangle)
+
+
+    def mousePressEvent(self, event):
+
+        self.game.get_score()
+
+        #debugging                        
+        if event.button() == Qt.MouseButton.RightButton: 
+            print(self.game.white_score)
+            print(self.game.black_score)
+
+        if event.button() == Qt.MouseButton.LeftButton:
+        #movement logic    
+            if self.square in game.current_moves: 
+                game.current_piece.square.has_piece = False
+                game.current_piece.square.piece = None
+                game.current_piece.move_piece(self.x_cords, self.y_cords)
+                game.move_number+=1
+            game.current_moves = []
+            game.current_piece = None
+
+            #board clear
+            for s in self.gui_squares: 
+                s.overlay_renderer = None
+                s.update()
+
+            #move generation
+            if self.square.has_piece and game.get_player_turn() == self.square.piece.color: 
+                game.current_piece = self.square.piece
+                self.square.piece.moves()
+                #self.square.piece.display_moves_matrix()
+                game.current_moves = self.square.piece.available_squares.copy()
+                for s in self.gui_squares:
+                    if s.square in self.square.piece.available_squares:
+                        s.overlay_renderer = QSvgRenderer(OVERLAY)
+                        s.update()
+        return super().mousePressEvent(event)
+
+    def update_square_graphics(self):
+        for s in self.gui_squares:
+            pass
 
 class MainWindow(QMainWindow):
     
-    def __init__(self):
+    def __init__(self, game):
         super().__init__()
         self.show()
         self.setWindowTitle("Chess")
         self.setFixedSize(QSize(660,650))
 
+        self.game = game
+        self.create_gui_squares()
+
         layout = QGridLayout()
         layout.setContentsMargins(20,20,20,20)
         layout.setSpacing(0)
-
-        self.create_gui_squares()
-
         for s in self.gui_squares:
             layout.addWidget(s, 8-s.y_cords, s.x_cords-1)
 
@@ -39,24 +97,23 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
 
+
     def create_gui_squares(self):
         self.gui_squares = []
-
         for i in range(0,8):
             for j in range(0,8):
-                self.gui_squares.append(GuiSquare(WHITE_SQUARE if (i+j)%2!=0 else BLACK_SQUARE, j+1,i+1))
+                self.gui_squares.append(GuiSquare(j+1,i+1, self.game,self.gui_squares))
+
 
 app = QApplication([])
 
-window = MainWindow()
+
+
+game = Game()
+window = MainWindow(game)
+
+#print(window.gui_squares[63].square.piece.code)
 
 
 app.exec()
 
-"""
-graphic object and add square self.variable to connect with code. 
-click on object calls square.piece.moves() which is then displayed on board
-graphic object will have piece image passed depending on piece on it
-numbered squares on edge
-
-"""

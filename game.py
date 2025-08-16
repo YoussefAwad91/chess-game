@@ -9,6 +9,7 @@ class Player:
         for piece in self.game.board.pieces:
             if piece.color == self.color:
                 self.pieces.append(piece)
+        self.all_current_moves = []
 
 
 class Game:
@@ -20,6 +21,9 @@ class Game:
         self.move_number = 0
         self.white_player = Player(self, "white")
         self.black_player = Player(self, "black")
+
+        self.current_moves = []
+        self.current_piece = None
 
     def get_player_turn(self):
         if self.move_number%2 == 0:
@@ -35,12 +39,32 @@ class Game:
     
     def select_piece(self, code):
         return self.board.get_piece(code).moves()
+    
+    def get_score(self):
+        self.black_score = 0
+        self.white_score = 0 
+
+        for piece in self.board.pieces:
+            if piece.is_captured:
+                if piece.color == "white":
+                    self.black_score += piece.VALUE
+                else:
+                    self.white_score += piece.VALUE
 
 
-game = Game()
+""" game = Game()
 
-game.board.display_board()
-game.board.get_piece("w_p_5").moves()
+
+game.board.get_piece("w_p_5").display_moves_graphical()
 game.board.get_piece("w_p_5").move_piece(5,4)
-game.board.display_board()
+game.board.get_piece("b_p_5").display_moves_graphical()
+game.board.get_piece("b_p_5").move_piece(5,5)
+game.board.get_piece("b_q").display_moves_graphical()
+game.board.get_piece("b_q").move_piece(6,6)
+game.board.get_piece("w_n_1").display_moves_graphical()
+game.board.get_piece("w_n_1").move_piece(3,3)
+game.board.get_piece("b_q").display_moves_graphical()
+game.board.get_piece("b_q").move_piece(6,3)
+game.board.get_piece("w_q").display_moves_graphical() """
+
 
