@@ -7,12 +7,12 @@ from constants import *
 from game import *
 
 class GuiSquare(QWidget):
-    def __init__(self, x_cords, y_cords, game, gui_squares):
+    def __init__(self, x_cords, y_cords,window, game, gui_squares):
         super().__init__()
+        self.window = window
 
         self.x_cords = x_cords
         self.y_cords = y_cords
-
 
         self.game = game
         self.square = self.game.board.squares[self.x_cords-1][self.y_cords-1]
@@ -38,38 +38,36 @@ class GuiSquare(QWidget):
 
     def mousePressEvent(self, event):
 
-        self.game.get_score()
-
+        self.game.square_clicked(self.square)
         #debugging                        
         if event.button() == Qt.MouseButton.RightButton: 
             print(self.game.white_score)
             print(self.game.black_score)
 
         if event.button() == Qt.MouseButton.LeftButton:
-        #movement logic    
-            if self.square in game.current_moves: 
-                game.current_piece.square.has_piece = False
-                game.current_piece.square.piece = None
-                game.current_piece.move_piece(self.x_cords, self.y_cords)
-                game.move_number+=1
-            game.current_moves = []
-            game.current_piece = None
-
+            
             #board clear
             for s in self.gui_squares: 
                 s.overlay_renderer = None
                 s.update()
 
-            #move generation
-            if self.square.has_piece and game.get_player_turn() == self.square.piece.color: 
-                game.current_piece = self.square.piece
-                self.square.piece.moves()
-                #self.square.piece.display_moves_matrix()
-                game.current_moves = self.square.piece.available_squares.copy()
+            #overlay
+            if self.square.has_piece and self.game.get_player_turn() == self.square.piece.color: 
                 for s in self.gui_squares:
                     if s.square in self.square.piece.available_squares:
                         s.overlay_renderer = QSvgRenderer(OVERLAY)
                         s.update()
+            
+
+            if self.game.board.get_piece("w_k").checked:
+                self.window.get_gui_square(self.game.board.get_piece("w_k").square).overlay_renderer = QSvgRenderer(CHECK_OVERLAY)
+                self.window.get_gui_square(self.game.board.get_piece("w_k").square).update()
+
+            if self.game.board.get_piece("b_k").checked:
+                self.window.get_gui_square(self.game.board.get_piece("b_k").square).overlay_renderer = QSvgRenderer(CHECK_OVERLAY)
+                self.window.get_gui_square(self.game.board.get_piece("b_k").square).update()
+
+
         return super().mousePressEvent(event)
 
     def update_square_graphics(self):
@@ -78,13 +76,13 @@ class GuiSquare(QWidget):
 
 class MainWindow(QMainWindow):
     
-    def __init__(self, game):
+    def __init__(self):
         super().__init__()
         self.show()
         self.setWindowTitle("Chess")
         self.setFixedSize(QSize(660,650))
 
-        self.game = game
+        self.game = Game()
         self.create_gui_squares()
 
         layout = QGridLayout()
@@ -97,23 +95,19 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
 
-
     def create_gui_squares(self):
         self.gui_squares = []
         for i in range(0,8):
             for j in range(0,8):
-                self.gui_squares.append(GuiSquare(j+1,i+1, self.game,self.gui_squares))
+                self.gui_squares.append(GuiSquare(j+1,i+1,self, self.game,self.gui_squares))
+
+    def get_gui_square(self, square):
+        for g_square in self.gui_squares:
+            if g_square.square == square:
+                return g_square
 
 
 app = QApplication([])
-
-
-
-game = Game()
-window = MainWindow(game)
-
-#print(window.gui_squares[63].square.piece.code)
-
-
+window = MainWindow()
 app.exec()
 

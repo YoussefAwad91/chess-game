@@ -10,11 +10,27 @@ class Player:
             if piece.color == self.color:
                 self.pieces.append(piece)
         self.all_current_moves = []
+        self.is_mate = False
 
+    def get_all_moves(self):
+        self.all_current_moves = []
+        for piece in self.pieces:
+            if not piece.is_captured:
+                self.all_current_moves.extend(piece.final_moves())
+        return self.all_current_moves
+    
+    def mate_or_stale(self):
+        if not self.get_all_moves():
+            if self.game.board.get_piece(f"{self.color[0]}_k").checked:
+                self.is_mate = True
+            else:
+                self.game.is_stale_mate = True
+        
 
 class Game:
 
     def __init__(self):
+    #def __init__(self, MainWindow):
         self.board = Board(self)
         self.white_score = 0
         self.black_score = 0 
@@ -24,6 +40,42 @@ class Game:
 
         self.current_moves = []
         self.current_piece = None
+        self.is_stale_mate = False
+
+        #self.window = MainWindow #for connection between logic and top level window
+
+    def square_clicked(self,square):
+
+        self.get_score()
+
+        if square in self.current_moves: #to perform move after selecting piece and showing move overlays
+            self.current_piece.square.has_piece = False
+            self.current_piece.square.piece = None
+            self.current_piece.move_piece(square.x_cords, square.y_cords)
+            self.move_number+=1
+        self.current_moves = []
+        self.current_piece = None
+
+        #move generation
+        if square.has_piece and self.get_player_turn() == square.piece.color: 
+            self.current_piece = square.piece
+            square.piece.final_moves()
+            #self.square.piece.display_moves_matrix()
+            self.current_moves = square.piece.available_squares.copy()
+        
+        self.board.get_piece("b_k").checked = False
+        self.board.get_piece("w_k").checked = False
+
+        if self.board.get_piece("w_k").square in self.black_player.get_all_moves():
+            self.board.get_piece("w_k").checked = True
+
+        if self.board.get_piece("b_k").square in self.white_player.get_all_moves():
+            self.board.get_piece("b_k").checked = True
+
+        self.get_player(self.get_player_turn()).mate_or_stale()
+        if self.get_player(self.get_player_turn()).is_mate:
+            print(self.get_player_turn() + " mated")
+
 
     def get_player_turn(self):
         if self.move_number%2 == 0:
@@ -38,7 +90,13 @@ class Game:
             return self.black_player.pieces
     
     def select_piece(self, code):
-        return self.board.get_piece(code).moves()
+        return self.board.get_piece(code).final_moves()
+    
+    def get_player(self, color):
+        if color =="white":
+            return self.white_player
+        else:
+            return self.black_player
     
     def get_score(self):
         self.black_score = 0

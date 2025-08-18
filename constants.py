@@ -1,14 +1,10 @@
-
-
 #gui.py
 
 ###### image asset paths #######
 WHITE_SQUARE = "assets/squares/white_square.svg"
 BLACK_SQUARE = "assets/squares/black_square.svg"
 OVERLAY = "assets/squares/overlay.svg"
-
-##### overlay scaling ########
-OVERLAY_SCALE = 0.4
+CHECK_OVERLAY = "assets/squares/check_overlay.svg"
 
 WHITE_PAWN   = "assets/pieces/white_pawn.svg"
 WHITE_ROOK   = "assets/pieces/white_rook.svg"
@@ -23,6 +19,9 @@ BLACK_KNIGHT = "assets/pieces/black_knight.svg"
 BLACK_BISHOP = "assets/pieces/black_bishop.svg"
 BLACK_QUEEN  = "assets/pieces/black_queen.svg"
 BLACK_KING   = "assets/pieces/black_king.svg"
+
+##### overlay scaling ########
+OVERLAY_SCALE = 0.4
 
 
 #grid.py

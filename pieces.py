@@ -1,9 +1,7 @@
 from constants import *
+import copy
 
 __all__ = ["Pawn", "Knight","Rook", "Bishop", "Queen", "King"]
-
-# todo: only change turn if move goes through
-# todo: count moves
 
 class Piece:  
 
@@ -32,6 +30,36 @@ class Piece:
         return False #if piece didnt move
                 
 ############## Generating moves #############
+
+    def final_moves(self):
+        self.initial_moves()
+        if not self.board.virtual:
+            self.remove_checked_moves()
+        return self.available_squares
+
+    def remove_checked_moves(self):
+        new_available_squares = []
+        for square in self.available_squares:
+            virtual_board = copy.deepcopy(self.board)
+            virtual_board.virtual = True
+            virtual_board.get_piece(self.code).final_moves()
+            virtual_board.get_piece(self.code).move_piece(square.x_cords, square.y_cords)
+            #virtual_board.display_board()
+            if self.color == "white":
+                if virtual_board.get_piece("w_k").square not in virtual_board.game.black_player.get_all_moves():
+                    new_available_squares.append(square)
+            else:
+                if virtual_board.get_piece("b_k").square not in virtual_board.game.white_player.get_all_moves():
+                    new_available_squares.append(square)
+
+            del virtual_board
+        #print("1", self.available_squares)
+        #print("2", new_available_squares)
+        #print("\n")
+        self.available_squares = new_available_squares 
+        return self.available_squares
+
+
     def square_inbounds(self, x, y): #ensure moves are within board boundaries
         if(1<=x<=8) and (1<=y<=8):
             return True
@@ -51,7 +79,7 @@ class Piece:
                         break
                     else:
                         self.available_squares.append(self.board.squares[self.square.x_cords + x_offset -1][self.square.y_cords + y_offset - 1])
-    
+
     def get_unblockable_moves(self, offsets):
         self.available_squares.clear()
         for dx, dy in offsets:
@@ -62,17 +90,17 @@ class Piece:
 
 ########### Display modes ###########
     def display_moves_letters(self):
-        self.moves()
+        self.final_moves()
         for s in self.available_squares:
             print(f"{chr(ord('A')-1+s.x_cords)}{s.y_cords} ")
 
     def display_moves_matrix(self):
-        self.moves()
+        self.final_moves()
         for s in self.available_squares:
             print(f"{s.x_cords}{s.y_cords} ")
 
     def display_moves_graphical(self):
-        self.moves()
+        self.final_moves()
         counter = 0
         for j in range(8):
             for i in range(8):
@@ -99,8 +127,9 @@ class Knight(Piece):
         self.icon = "♘ " if color == "white" else "♞ "
         self.piece_path = WHITE_KNIGHT if color == "white" else BLACK_KNIGHT
 
-    def moves(self):
+    def initial_moves(self):
         super().get_unblockable_moves(KNIGHT_OFFSETS)
+        return self.available_squares
 
 class Bishop(Piece):
     VALUE = 3
@@ -110,8 +139,9 @@ class Bishop(Piece):
         self.icon = "♗ " if color == "white" else "♝ "
         self.piece_path = WHITE_BISHOP if color == "white" else BLACK_BISHOP
 
-    def moves(self):
+    def initial_moves(self):
         super().get_blockable_moves(BISHOP_FACTORS)
+        return self.available_squares
 
 class Rook(Piece):
     VALUE = 5
@@ -120,9 +150,11 @@ class Rook(Piece):
         super().__init__(x, y, color, board, game,code)
         self.icon = "♖ " if color == "white" else "♜ "
         self.piece_path = WHITE_ROOK if color == "white" else BLACK_ROOK
+        self.has_moved = False
 
-    def moves(self):
+    def initial_moves(self):
         super().get_blockable_moves(ROOK_FACTORS)
+        return self.available_squares
 
 class Queen(Piece):
     VALUE = 9
@@ -132,8 +164,9 @@ class Queen(Piece):
         self.icon = "♕ " if color == "white" else "♛ "
         self.piece_path = WHITE_QUEEN if color == "white" else BLACK_QUEEN
 
-    def moves(self):
+    def initial_moves(self):
         super().get_blockable_moves(BISHOP_FACTORS+ROOK_FACTORS)
+        return self.available_squares
 
 class King(Piece):
     VALUE = 1000000
@@ -142,9 +175,12 @@ class King(Piece):
         super().__init__(x, y, color, board, game,code)
         self.icon = "♔ " if color == "white" else "♚ "
         self.piece_path = WHITE_KING if color == "white" else BLACK_KING
+        self.checked = False
+        self.has_moved = False
 
-    def moves(self):
+    def initial_moves(self):
         super().get_unblockable_moves(KING_OFFSETS)
+        return self.available_squares
         # todo: castling
 
 class Pawn(Piece):
@@ -176,7 +212,7 @@ class Pawn(Piece):
                             self.enpassant_move = (self.square.x_cords+direction,self.square.y_cords+self.orientation)
             # if y==5 or y==4 for black and pawn that just moved to right or left can capture enpassant
 
-    def moves(self):
+    def initial_moves(self):
         #self.orientation
         self.available_squares.clear()
         for x_offset,y_offset in (PAWN_OFFSET if not self.has_moved else PAWN_OFFSET[:-1]):
@@ -188,6 +224,7 @@ class Pawn(Piece):
         self.enpassant_move = (0,0)
         self.pawn_capturing_moves(1)
         self.pawn_capturing_moves(-1)
+        return self.available_squares
 
 
         
@@ -199,7 +236,7 @@ class Pawn(Piece):
                 self.has_moved = True
             elif self.square.y_cords == 8:
                 self.board.remove_piece(self.square.x_cords, 8)
-                # todo: reate new promoted piece object - set as queen for now
+                # todo: create new promoted piece object - set as queen for now
                 # todo: update pieces list to remove pawn and add queen
                 self.promoted_piece = Queen(self.square.x_cords, 8, self.color, self.board,self.game, f"{self.color[0]}_q_2")
                 self.board.place_piece(self.square.x_cords, 8, self.promoted_piece)

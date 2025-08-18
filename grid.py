@@ -13,9 +13,12 @@ class Square:
         self.piece = piece
 
 
+
 class Board:
     def __init__(self,game):
         self.pieces = []
+        self.game = game
+        self.virtual = False
         self.squares = [[Square(column, row, False, None) for row in range(1,8+1)] for column in range(1,8+1)]
 
         for color, back_row, pawn_row in [("white",0,1),("black",7,6)]: #list indices
@@ -32,6 +35,10 @@ class Board:
         self.squares[x-1][y-1].piece = piece
         piece.square = self.squares[x-1][y-1]
 
+    def get_square(self, x, y):
+        for square in self.squares:
+            if square.x_cords == x and square.y_cords == y:
+                return square
     
     def remove_piece(self,x,y):
         self.squares[x-1][y-1].has_piece = False
@@ -56,3 +63,4 @@ class Board:
                     print("\n", end="")
                     counter =0
         print("\n")
+
