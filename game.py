@@ -1,16 +1,22 @@
+import time
 from grid import Board
 
 class Player:
 
     def __init__(self, game, color):
         self.pieces = []
+
         self.game = game
         self.color = color
+        
+        self.all_current_moves = []
+        self.is_mate = False
+
+        self.clock = PlayerClock(180,2) #user input
+
         for piece in self.game.board.pieces:
             if piece.color == self.color:
                 self.pieces.append(piece)
-        self.all_current_moves = []
-        self.is_mate = False
 
     def get_all_moves(self):
         self.all_current_moves = []
@@ -26,6 +32,36 @@ class Player:
             else:
                 self.game.is_stale_mate = True
         
+
+
+class PlayerClock:
+    def __init__(self, time_limit, increment=0):
+
+        self.time_elapsed = 0
+        self.is_running = False
+        self.time_limit = time_limit
+        self.last_start_time = 0
+        self.remaining_time = self.time_limit
+        self.increment = increment
+    
+    def start_time(self):
+        if not self.is_running:
+            self.last_start_time = time.perf_counter()
+            self.is_running = True
+
+    def stop_time(self):
+        if self.is_running:
+            self.time_elapsed = self.time_elapsed + time.perf_counter() - self.last_start_time
+            self.remaining_time = self.time_limit - self.time_elapsed
+            self.time_limit += self.increment
+            self.is_running = False
+    
+    def get_remaining_time(self):
+        if self.is_running:
+            local_elapsed = time.perf_counter() - self.last_start_time
+            return self.remaining_time - local_elapsed
+        return self.remaining_time
+
 
 class Game:
 
@@ -48,14 +84,19 @@ class Game:
 
         self.get_score()
 
+        self.get_player(self.get_player_turn()).clock.start_time()
+
         if square in self.current_moves: #to perform move after selecting piece and showing move overlays
             self.current_piece.square.has_piece = False
             self.current_piece.square.piece = None
             self.current_piece.move_piece(square.x_cords, square.y_cords)
+            self.get_player(self.get_player_turn()).clock.stop_time()
             self.move_number+=1
+            self.get_player(self.get_player_turn()).clock.start_time()
+
         self.current_moves = []
         self.current_piece = None
-
+    
         #move generation
         if square.has_piece and self.get_player_turn() == square.piece.color: 
             self.current_piece = square.piece
