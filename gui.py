@@ -90,7 +90,6 @@ class GuiSquare(QWidget):
             self.window.get_gui_square(self.game.board.get_piece("b_k").square).overlay_renderer = QSvgRenderer(CHECK_OVERLAY)
             self.window.get_gui_square(self.game.board.get_piece("b_k").square).update()
 
-
 class TimeLabel(QLabel):
     
     def __init__(self, player):
@@ -102,23 +101,25 @@ class TimeLabel(QLabel):
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setAutoFillBackground(True)
 
-
         self.timer = QTimer() # timer acts as a poller
         self.timer.timeout.connect(self.set_current_time)
         self.timer.start(500) #refresh rate = 500ms
 
     def set_current_time(self):
-        current_time_seconds = self.player.clock.get_remaining_time()
-        hours, remainder = divmod(current_time_seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        seconds = int(seconds)
-        minutes = int(minutes)
-        hours = int(hours)
-        if hours>0:
-            self.setText(f"{hours}:{minutes if minutes>9 else f"0{minutes}"}:{seconds if seconds>9 else f"0{seconds}"}")
+        if self.player.game.timed == False:
+            self.setText("∞")
         else:
-            self.setText(f"{minutes if minutes>9 else f"0{minutes}"}:{seconds if seconds>9 else f"0{seconds}"}")
-        return (hours,minutes,seconds)
+            current_time_seconds = self.player.clock.get_remaining_time()
+            hours, remainder = divmod(current_time_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            seconds = int(seconds)
+            minutes = int(minutes)
+            hours = int(hours)
+            if hours>0:
+                self.setText(f"{hours}:{minutes if minutes>9 else f"0{minutes}"}:{seconds if seconds>9 else f"0{seconds}"}")
+            else:
+                self.setText(f"{minutes if minutes>9 else f"0{minutes}"}:{seconds if seconds>9 else f"0{seconds}"}")
+            return (hours,minutes,seconds)
 
 class PromotionDialog(QDialog):
     pieces = ["rook", "queen", "knight", "bishop"]
@@ -129,6 +130,7 @@ class PromotionDialog(QDialog):
         self.setStyleSheet(WHITE_DIALOG_STYLESHEET if window.game.get_player_turn()=="white" else BLACK_DIALOG_STYLESHEET)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setFixedSize((QSize(300,90)))
+        self.setModal(True)
         
         button_layout = QHBoxLayout()
         self.move(QPoint((X_POS-140)+self.window.game.promotion_piece.square.x_cords*70,Y_POS+(132 if window.game.get_player_turn()=="white" else 486)))
@@ -141,9 +143,7 @@ class PromotionDialog(QDialog):
             button.clicked.connect(lambda checked, p=piece: self.select_promotion(p))
 
             button_layout.addWidget(button)
-
         self.setLayout(button_layout)
-        
         
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Escape:
@@ -151,12 +151,57 @@ class PromotionDialog(QDialog):
             return
         return super().keyPressEvent(event)
 
-    
     def select_promotion(self,piece):
         self.choice = piece
         self.window.game.next_turn()
         self.accept()
                 
+class TimeFormatDialog(QDialog):
+    def __init__(self, window):
+        super().__init__()
+
+        self.window = window
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setFixedSize((QSize(400,320)))
+        self.setModal(True)
+        self.move(530,335)
+
+        button_layout = QGridLayout()
+
+        x_counter = 0
+        y_counter = 0
+        
+        for time_f in TIME_FORMATS:
+            time_limit = TIME_FORMATS[time_f][0]
+            increment = TIME_FORMATS[time_f][1]
+            button = QPushButton()
+            button.setStyleSheet(TIME_DIALOG_STYLESHEET)
+            button.setText(time_f)
+            button.clicked.connect(lambda checked, t=time_limit, i=increment: self.set_time_settings(t,i))
+
+            button_layout.addWidget(button,y_counter,x_counter)
+            x_counter+=1
+            if x_counter>2:
+                x_counter = 0
+                y_counter+=1
+            if y_counter>2:
+                x_counter =1
+
+        self.setLayout(button_layout)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            event.ignore()
+            return
+        return super().keyPressEvent(event)
+    
+
+    def set_time_settings(self,t,i):
+        self.window.game.set_time_settings(t,i)
+        self.accept()
+        self.window.white_time.set_current_time()
+        self.window.black_time.set_current_time()
+
 
 class MainWindow(QMainWindow):
     
@@ -178,12 +223,12 @@ class MainWindow(QMainWindow):
            board_layout.addWidget(s, 8-s.y_cords, s.x_cords-1)
 
         clock_layout = QVBoxLayout()
-        white_time = TimeLabel(self.game.white_player)
-        black_time = TimeLabel(self.game.black_player)
+        self.white_time = TimeLabel(self.game.white_player)
+        self.black_time = TimeLabel(self.game.black_player)
         clock_layout.addStretch()
-        clock_layout.addWidget(black_time)
+        clock_layout.addWidget(self.black_time)
         clock_layout.addStretch()
-        clock_layout.addWidget(white_time)
+        clock_layout.addWidget(self.white_time)
         clock_layout.addStretch()
 
         main_layout = QHBoxLayout()
@@ -195,9 +240,10 @@ class MainWindow(QMainWindow):
         widget.setLayout(main_layout)
         self.setCentralWidget(widget)
 
-        #dialog = PromotionDialog(self)
-        #dialog.move(QPoint((X_POS-140)+8*70,Y_POS+80))
-        #dialog.exec()
+        time_dialog = TimeFormatDialog(self)
+        time_dialog.exec()
+
+
 
     def create_gui_squares(self):
         self.gui_squares = []
@@ -219,4 +265,3 @@ class MainWindow(QMainWindow):
 app = QApplication([])
 window = MainWindow()
 app.exec()
-

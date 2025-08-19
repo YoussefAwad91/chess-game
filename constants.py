@@ -78,6 +78,43 @@ BLACK_DIALOG_STYLESHEET = """
             }
         """
 
+TIME_DIALOG_STYLESHEET = """
+            QDialog {
+                background-color: #1e1e2f;
+                border-radius: 12px;
+            }
+            QLabel {
+                color: white;
+                font-size: 16px;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QPushButton {
+                background-color: #3a3a5c;
+                color: white;
+                font-size: 14px;
+                font-weight: bold;
+                border-radius: 8px;
+                padding: 6px 12px;
+            }
+            QPushButton:hover {
+                background-color: #505080;
+            }
+            QPushButton:pressed {
+                background-color: #2a2a40;
+            }
+            QLineEdit, QComboBox {
+                background-color: #2a2a40;
+                color: white;
+                font-size: 14px;
+                border: 1px solid #505080;
+                border-radius: 6px;
+                padding: 4px;
+            }
+        """
+
+##### time formats ######
+
+TIME_FORMATS = {"1 min": (60,0), "1|1": (60,1),"2|1": (120,1),"3 min": (180,0),"3|2": (180,2),"5 min": (300,0),"10 min": (600,0),"15|10": (900,10),"30 min": (1800,0), "∞":(-1,0) }
 
 ##### scaling ########
 OVERLAY_SCALE = 0.4

@@ -13,7 +13,7 @@ class Player:
         self.all_current_moves = []
         self.is_mate = False
 
-        self.clock = PlayerClock(180,2) #user input
+        self.clock = PlayerClock() #user input
 
         for piece in self.game.board.pieces:
             if piece.color == self.color:
@@ -32,18 +32,24 @@ class Player:
                 self.is_mate = True
             else:
                 self.game.is_stale_mate = True
+
+    def set_time_settings(self, time, increment):
+        if time<0:
+            self.game.timed = False
+        else:
+            self.game.timed = True
+        self.clock.time_limit =time
+        self.clock.increment = increment
+
         
-
-
 class PlayerClock:
-    def __init__(self, time_limit, increment=0):
+    def __init__(self):
 
         self.time_elapsed = 0
         self.is_running = False
-        self.time_limit = time_limit
+        self.time_limit = 0
         self.last_start_time = 0
-        self.remaining_time = self.time_limit
-        self.increment = increment
+        self.increment = 0
     
     def start_time(self):
         if not self.is_running:
@@ -53,15 +59,14 @@ class PlayerClock:
     def stop_time(self):
         if self.is_running:
             self.time_elapsed = self.time_elapsed + time.perf_counter() - self.last_start_time
-            self.remaining_time = self.time_limit - self.time_elapsed
             self.time_limit += self.increment
             self.is_running = False
     
     def get_remaining_time(self):
         if self.is_running:
             local_elapsed = time.perf_counter() - self.last_start_time
-            return self.remaining_time - local_elapsed
-        return self.remaining_time
+            return self.time_limit - self.time_elapsed - local_elapsed
+        return self.time_limit - self.time_elapsed
 
 
 class Game:
@@ -72,8 +77,11 @@ class Game:
         self.white_score = 0
         self.black_score = 0 
         self.move_number = 0
+        self.timed = None
+        
         self.white_player = Player(self, "white")
         self.black_player = Player(self, "black")
+
 
         self.current_moves = []
         self.current_piece = None
@@ -121,6 +129,7 @@ class Game:
         self.get_player(self.get_player_turn()).mate_or_stale()
         if self.get_player(self.get_player_turn()).is_mate:
             print(self.get_player_turn() + " mated")
+            # todo: stop both timers
                   
     def next_turn(self):
         self.get_player(self.get_player_turn()).clock.stop_time()
@@ -159,20 +168,6 @@ class Game:
                 else:
                     self.white_score += piece.VALUE
 
-
-""" game = Game()
-
-
-game.board.get_piece("w_p_5").display_moves_graphical()
-game.board.get_piece("w_p_5").move_piece(5,4)
-game.board.get_piece("b_p_5").display_moves_graphical()
-game.board.get_piece("b_p_5").move_piece(5,5)
-game.board.get_piece("b_q").display_moves_graphical()
-game.board.get_piece("b_q").move_piece(6,6)
-game.board.get_piece("w_n_1").display_moves_graphical()
-game.board.get_piece("w_n_1").move_piece(3,3)
-game.board.get_piece("b_q").display_moves_graphical()
-game.board.get_piece("b_q").move_piece(6,3)
-game.board.get_piece("w_q").display_moves_graphical() """
-
-
+    def set_time_settings(self,time_limit,time_increment):
+        self.white_player.set_time_settings(time_limit, time_increment)
+        self.black_player.set_time_settings(time_limit, time_increment)

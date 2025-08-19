@@ -12,8 +12,6 @@ class Square:
         self.has_piece = has_piece
         self.piece = piece
 
-
-
 class Board:
     def __init__(self,game):
         self.pieces = []

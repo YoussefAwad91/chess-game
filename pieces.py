@@ -24,7 +24,6 @@ class Piece:
                 if self.board.squares[to_x-1][to_y-1].has_piece:
                     self.square.piece.is_captured = True
                     self.square.piece.square = None
-                    # todo: add score **score += self.square.piece.VALUE
                 self.board.place_piece(to_x,to_y,self)
                 return True
         return False #if piece didnt move
@@ -237,13 +236,10 @@ class Pawn(Piece):
             if not self.has_moved:
                 self.first_move = self.game.move_number
                 self.has_moved = True
+                
             elif self.square.y_cords == (8 if self.color == "white" else 1):
                 self.to_promote = True
-                """ self.board.remove_piece(self.square.x_cords, 8)
-                # todo: create new promoted piece object - set as queen for now
-                # todo: update pieces list to remove pawn and add queen
-                self.promoted_piece = Queen(self.square.x_cords, 8, self.color, self.board,self.game, f"{self.color[0]}_q_2")
-                self.board.place_piece(self.square.x_cords, 8, self.promoted_piece) """
+  
             elif self.enpassant_move == (to_x, to_y):
                 self.board.squares[to_x-1][to_y-self.orientation-1].piece.is_captured = True
                 self.board.squares[to_x-1][to_y-self.orientation-1].piece.square = None
