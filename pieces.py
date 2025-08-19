@@ -185,6 +185,8 @@ class King(Piece):
 
 class Pawn(Piece):
     VALUE = 1
+    PROMOTION_PIECES = {"queen": Queen, "knight": Knight, "bishop": Bishop, "rook": Rook}
+
     
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
@@ -196,6 +198,7 @@ class Pawn(Piece):
         self.promoted_piece = None
         self.first_move = 0
         self.enpassant_move = (0,0)
+        self.to_promote = False
 
     def pawn_capturing_moves(self, direction): #1 for right and -1 for left
         if self.square_inbounds(self.square.x_cords+direction,self.square.y_cords+self.orientation):
@@ -234,13 +237,22 @@ class Pawn(Piece):
             if not self.has_moved:
                 self.first_move = self.game.move_number
                 self.has_moved = True
-            elif self.square.y_cords == 8:
-                self.board.remove_piece(self.square.x_cords, 8)
+            elif self.square.y_cords == (8 if self.color == "white" else 1):
+                self.to_promote = True
+                """ self.board.remove_piece(self.square.x_cords, 8)
                 # todo: create new promoted piece object - set as queen for now
                 # todo: update pieces list to remove pawn and add queen
                 self.promoted_piece = Queen(self.square.x_cords, 8, self.color, self.board,self.game, f"{self.color[0]}_q_2")
-                self.board.place_piece(self.square.x_cords, 8, self.promoted_piece)
+                self.board.place_piece(self.square.x_cords, 8, self.promoted_piece) """
             elif self.enpassant_move == (to_x, to_y):
                 self.board.squares[to_x-1][to_y-self.orientation-1].piece.is_captured = True
                 self.board.squares[to_x-1][to_y-self.orientation-1].piece.square = None
                 self.board.remove_piece(to_x, to_y - self.orientation)
+    
+    def promote_pawn(self, piece):
+        self.board.remove_piece(self.square.x_cords, (8 if self.color == "white" else 1))
+        self.promoted_piece = self.PROMOTION_PIECES[piece](self.square.x_cords, (8 if self.color == "white" else 1), self.color, self.board,self.game, f"{self.color[0]}_{piece[0] if piece!="knight" else piece[1]}_promote")
+        self.board.place_piece(self.square.x_cords, (8 if self.color == "white" else 1), self.promoted_piece)
+        self.board.pieces.append(self.promoted_piece)
+        self.board.game.get_player(self.color).pieces.append(self.promoted_piece)
+        self.to_promote = False

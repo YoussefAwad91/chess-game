@@ -1,5 +1,6 @@
 import time
 from grid import Board
+from pieces import Pawn
 
 class Player:
 
@@ -77,6 +78,7 @@ class Game:
         self.current_moves = []
         self.current_piece = None
         self.is_stale_mate = False
+        self.promotion_piece = None
 
         #self.window = MainWindow #for connection between logic and top level window
 
@@ -90,9 +92,14 @@ class Game:
             self.current_piece.square.has_piece = False
             self.current_piece.square.piece = None
             self.current_piece.move_piece(square.x_cords, square.y_cords)
-            self.get_player(self.get_player_turn()).clock.stop_time()
-            self.move_number+=1
-            self.get_player(self.get_player_turn()).clock.start_time()
+            self.promotion_piece = self.current_piece
+            if not isinstance(self.current_piece,Pawn):
+                self.next_turn()
+            else:
+                if not self.current_piece.to_promote:
+                    self.next_turn()
+
+
 
         self.current_moves = []
         self.current_piece = None
@@ -116,7 +123,11 @@ class Game:
         self.get_player(self.get_player_turn()).mate_or_stale()
         if self.get_player(self.get_player_turn()).is_mate:
             print(self.get_player_turn() + " mated")
-
+                  
+    def next_turn(self):
+        self.get_player(self.get_player_turn()).clock.stop_time()
+        self.move_number+=1
+        self.get_player(self.get_player_turn()).clock.start_time()
 
     def get_player_turn(self):
         if self.move_number%2 == 0:

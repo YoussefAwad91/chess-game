@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtSvg import * 
+from PyQt6.QtTest import QTest
 
 from constants import *
 from game import *
@@ -49,38 +50,45 @@ class GuiSquare(QWidget):
 
         #debugging                        
         if event.button() == Qt.MouseButton.RightButton: 
-            dialog = PromotionDialog(self) ###temp
-            dialog.exec()
+            print('d')
            
-
-        self.game.square_clicked(self.square)
-
-        
         if event.button() == Qt.MouseButton.LeftButton:
-            
-            #board clear
-            for s in self.gui_squares: 
-                s.overlay_renderer = None
-                s.update()
 
-            #overlay
-            if self.square.has_piece and self.game.get_player_turn() == self.square.piece.color: 
-                for s in self.gui_squares:
-                    if s.square in self.square.piece.available_squares:
-                        s.overlay_renderer = QSvgRenderer(OVERLAY)
-                        s.update()
-            
+            self.game.square_clicked(self.square)
+        
+            if self.square.has_piece:
+                if isinstance(self.square.piece, Pawn):
+                    if self.square.piece.to_promote:
+                        dialog = PromotionDialog(self.window)
+                        dialog.exec()
+                        self.square.piece.promote_pawn(dialog.choice)
 
-            if self.game.board.get_piece("w_k").checked:
-                self.window.get_gui_square(self.game.board.get_piece("w_k").square).overlay_renderer = QSvgRenderer(CHECK_OVERLAY)
-                self.window.get_gui_square(self.game.board.get_piece("w_k").square).update()
-
-            if self.game.board.get_piece("b_k").checked:
-                self.window.get_gui_square(self.game.board.get_piece("b_k").square).overlay_renderer = QSvgRenderer(CHECK_OVERLAY)
-                self.window.get_gui_square(self.game.board.get_piece("b_k").square).update()
-
+        self.update_gui_display()
 
         return super().mousePressEvent(event)
+    
+    def update_gui_display(self):
+        #board clear
+        for s in self.gui_squares: 
+            s.overlay_renderer = None
+            s.update()
+
+        #overlay
+        if self.square.has_piece and self.game.get_player_turn() == self.square.piece.color: 
+            for s in self.gui_squares:
+                if s.square in self.square.piece.available_squares:
+                    s.overlay_renderer = QSvgRenderer(OVERLAY)
+                    s.update()
+        
+
+        if self.game.board.get_piece("w_k").checked:
+            self.window.get_gui_square(self.game.board.get_piece("w_k").square).overlay_renderer = QSvgRenderer(CHECK_OVERLAY)
+            self.window.get_gui_square(self.game.board.get_piece("w_k").square).update()
+
+        if self.game.board.get_piece("b_k").checked:
+            self.window.get_gui_square(self.game.board.get_piece("b_k").square).overlay_renderer = QSvgRenderer(CHECK_OVERLAY)
+            self.window.get_gui_square(self.game.board.get_piece("b_k").square).update()
+
 
 class TimeLabel(QLabel):
     
@@ -92,7 +100,7 @@ class TimeLabel(QLabel):
         self.setContentsMargins(0,0,0,0)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setAutoFillBackground(True)
-        self.setText("5:00")
+
 
         self.timer = QTimer() # timer acts as a poller
         self.timer.timeout.connect(self.set_current_time)
@@ -122,7 +130,7 @@ class PromotionDialog(QDialog):
         self.setFixedSize((QSize(300,90)))
         
         button_layout = QHBoxLayout()
-        self.move(QPoint((X_POS-140)+self.window.game.current_piece.square.x_cords*70,Y_POS+(132 if window.game.get_player_turn()=="white" else 486)))
+        self.move(QPoint((X_POS-140)+self.window.game.promotion_piece.square.x_cords*70,Y_POS+(132 if window.game.get_player_turn()=="white" else 486)))
         
         for piece in self.pieces:
             button = QPushButton()
@@ -132,14 +140,23 @@ class PromotionDialog(QDialog):
             button.clicked.connect(lambda checked, p=piece: self.select_promotion(p))
 
             button_layout.addWidget(button)
-        
-        self.setLayout(button_layout)
 
+        self.setLayout(button_layout)
+        
+        
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            event.ignore()
+            return
+        return super().keyPressEvent(event)
+
+    
     def select_promotion(self,piece):
         self.choice = piece
-        print(self.choice)
+        self.window.game.next_turn()
         self.accept()
-        
+        print('d')
+                
 
 class MainWindow(QMainWindow):
     
@@ -191,6 +208,11 @@ class MainWindow(QMainWindow):
     def get_gui_square(self, square):
         for g_square in self.gui_squares:
             if g_square.square == square:
+                return g_square
+            
+    def get_gui_square_cords(self, x, y):
+        for g_square in self.gui_squares:
+            if g_square.x_cords == x and g_square.y_cords:
                 return g_square
 
 
