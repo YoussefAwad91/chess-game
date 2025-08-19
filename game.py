@@ -99,8 +99,6 @@ class Game:
                 if not self.current_piece.to_promote:
                     self.next_turn()
 
-
-
         self.current_moves = []
         self.current_piece = None
     

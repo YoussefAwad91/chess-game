@@ -249,10 +249,11 @@ class Pawn(Piece):
                 self.board.squares[to_x-1][to_y-self.orientation-1].piece.square = None
                 self.board.remove_piece(to_x, to_y - self.orientation)
     
-    def promote_pawn(self, piece):
+    def promote_pawn(self, piece, square):
         self.board.remove_piece(self.square.x_cords, (8 if self.color == "white" else 1))
         self.promoted_piece = self.PROMOTION_PIECES[piece](self.square.x_cords, (8 if self.color == "white" else 1), self.color, self.board,self.game, f"{self.color[0]}_{piece[0] if piece!="knight" else piece[1]}_promote")
         self.board.place_piece(self.square.x_cords, (8 if self.color == "white" else 1), self.promoted_piece)
         self.board.pieces.append(self.promoted_piece)
         self.board.game.get_player(self.color).pieces.append(self.promoted_piece)
         self.to_promote = False
+        self.game.square_clicked(square) #rerun click to calculate king condition (check, checkmate, etc)

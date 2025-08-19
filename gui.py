@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtSvg import * 
-from PyQt6.QtTest import QTest
+
 
 from constants import *
 from game import *
@@ -61,7 +61,8 @@ class GuiSquare(QWidget):
                     if self.square.piece.to_promote:
                         dialog = PromotionDialog(self.window)
                         dialog.exec()
-                        self.square.piece.promote_pawn(dialog.choice)
+                        self.square.piece.promote_pawn(dialog.choice, self.square)
+            
 
         self.update_gui_display()
 
@@ -155,7 +156,6 @@ class PromotionDialog(QDialog):
         self.choice = piece
         self.window.game.next_turn()
         self.accept()
-        print('d')
                 
 
 class MainWindow(QMainWindow):
