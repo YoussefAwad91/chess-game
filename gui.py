@@ -50,7 +50,7 @@ class GuiSquare(QWidget):
 
         #debugging                        
         if event.button() == Qt.MouseButton.RightButton: 
-            print('d')
+            print(self.game.board.get_piece(f'{self.game.get_player_turn()[0]}_k').king_castling_moves())
            
         if event.button() == Qt.MouseButton.LeftButton:
 

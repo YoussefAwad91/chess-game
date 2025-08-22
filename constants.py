@@ -93,7 +93,7 @@ TIME_DIALOG_STYLESHEET = """
                 color: white;
                 font-size: 14px;
                 font-weight: bold;
-                border-radius: 8px;
+                border-radius: 12px;
                 padding: 6px 12px;
             }
             QPushButton:hover {

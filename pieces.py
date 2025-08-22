@@ -14,6 +14,7 @@ class Piece:
         self.code = code #to be able to reference indivdual pieces without position
         self.is_captured = False
         self.available_squares =[]
+        self.has_moved = False
 
 
     def move_piece(self,to_x, to_y): #with capturing funcitonality
@@ -25,6 +26,7 @@ class Piece:
                     self.square.piece.is_captured = True
                     self.square.piece.square = None
                 self.board.place_piece(to_x,to_y,self)
+                self.has_moved = True
                 return True
         return False #if piece didnt move
                 
@@ -41,7 +43,11 @@ class Piece:
         for square in self.available_squares:
             virtual_board = copy.deepcopy(self.board)
             virtual_board.virtual = True
-            virtual_board.get_piece(self.code).final_moves()
+            if isinstance(self, King):
+                virtual_board.get_piece(self.code).intermediate_moves()
+            else:
+                virtual_board.get_piece(self.code).final_moves()
+
             virtual_board.get_piece(self.code).move_piece(square.x_cords, square.y_cords)
             #virtual_board.display_board()
             if self.color == "white":
@@ -144,12 +150,11 @@ class Bishop(Piece):
 
 class Rook(Piece):
     VALUE = 5
-
+    
     def __init__(self, x, y, color, board, game,code):
         super().__init__(x, y, color, board, game,code)
         self.icon = "♖ " if color == "white" else "♜ "
         self.piece_path = WHITE_ROOK if color == "white" else BLACK_ROOK
-        self.has_moved = False
 
     def initial_moves(self):
         super().get_blockable_moves(ROOK_FACTORS)
@@ -175,12 +180,70 @@ class King(Piece):
         self.icon = "♔ " if color == "white" else "♚ "
         self.piece_path = WHITE_KING if color == "white" else BLACK_KING
         self.checked = False
-        self.has_moved = False
+        self.castling = [[None,False],[None,False]] # [Short castle, long castle] , (castling move square, has castled or not)
 
     def initial_moves(self):
         super().get_unblockable_moves(KING_OFFSETS)
+    
+    def intermediate_moves(self):
+        self.initial_moves()
+        if not self.board.virtual:
+            self.remove_checked_moves()
         return self.available_squares
-        # todo: castling
+    
+    def final_moves(self):
+        self.intermediate_moves()
+
+        self.castling = [[None,False],[None,False]]
+        self.king_castling_moves()
+
+        for move in self.castling:
+            if move[0] != None:
+                self.available_squares.append(move[0])
+
+
+                #adds move even if it causes check
+        return self.available_squares
+
+    def king_castling_moves(self):
+        if self.has_moved:
+            return
+        else:
+            if not self.board.get_piece(f"{self.color[0]}_r_2").has_moved and not self.board.get_piece(f"{self.color[0]}_r_2").is_captured: #neither piece has moved
+                if not self.board.get_square(self.square.x_cords+1, self.square.y_cords).has_piece and not self.board.get_square(self.square.x_cords+2, self.square.y_cords).has_piece: #space between is free
+                    if not self.is_square_attacked(self.square.x_cords+2, self.square.y_cords) and not self.is_square_attacked(self.square.x_cords+1, self.square.y_cords):
+                        self.castling[0][0] = self.board.get_square(self.square.x_cords+2, self.square.y_cords)
+
+            if not self.board.get_piece(f"{self.color[0]}_r_1").has_moved and not self.board.get_piece(f"{self.color[0]}_r_1").is_captured: #neither piece has moved
+                if not self.board.get_square(self.square.x_cords-1, self.square.y_cords).has_piece and not self.board.get_square(self.square.x_cords-2, self.square.y_cords).has_piece and not self.board.get_square(self.square.x_cords-3, self.square.y_cords).has_piece: #space between is free
+                    if not self.is_square_attacked(self.square.x_cords-2, self.square.y_cords) and not self.is_square_attacked(self.square.x_cords-1, self.square.y_cords):    
+                        self.castling[1][0] = self.board.get_square(self.square.x_cords-2, self.square.y_cords)
+        return self.castling
+
+    def move_piece(self, to_x, to_y):
+        counter = 0
+        for move in self.castling:
+            if move[0] != None:
+                if move[0].x_cords == to_x and move[0].y_cords == to_y:
+                    self.board.get_piece(f"{self.color[0]}_r_{2-counter}").final_moves()
+                    self.board.get_piece(f"{self.color[0]}_r_{2-counter}").move_piece(to_x-(1-2*counter),to_y)
+                    break
+                counter+=1
+                
+        #castling move
+        return super().move_piece(to_x, to_y)
+    
+    def is_square_attacked(self, x, y):
+        opponent_color = "black" if self.color == "white" else "white"
+        opponent_player = self.game.black_player if opponent_color == "black" else self.game.white_player
+        
+        for piece in opponent_player.pieces:
+            if not piece.is_captured and not isinstance(piece, King):
+                piece.initial_moves()
+                for square in piece.available_squares:
+                    if square.x_cords == x and square.y_cords == y:
+                        return True
+        return False
 
 class Pawn(Piece):
     VALUE = 1
@@ -193,7 +256,6 @@ class Pawn(Piece):
         self.piece_path = WHITE_PAWN if color == "white" else BLACK_PAWN
 
         self.orientation = 1 if color == "white" else -1  #board orientation for black vs white movement
-        self.has_moved = False
         self.promoted_piece = None
         self.first_move = 0
         self.enpassant_move = (0,0)
@@ -227,8 +289,6 @@ class Pawn(Piece):
         self.pawn_capturing_moves(1)
         self.pawn_capturing_moves(-1)
         return self.available_squares
-
-
         
 
     def move_piece(self, to_x, to_y):

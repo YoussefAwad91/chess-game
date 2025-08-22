@@ -34,9 +34,10 @@ class Board:
         piece.square = self.squares[x-1][y-1]
 
     def get_square(self, x, y):
-        for square in self.squares:
-            if square.x_cords == x and square.y_cords == y:
-                return square
+        for row in self.squares:
+            for square in row:
+                if square.x_cords == x and square.y_cords == y:
+                    return square
     
     def remove_piece(self,x,y):
         self.squares[x-1][y-1].has_piece = False
