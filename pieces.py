@@ -225,10 +225,10 @@ class King(Piece):
         for move in self.castling:
             if move[0] != None:
                 if move[0].x_cords == to_x and move[0].y_cords == to_y:
-                    self.board.get_piece(f"{self.color[0]}_r_{2-counter}").final_moves()
-                    self.board.get_piece(f"{self.color[0]}_r_{2-counter}").move_piece(to_x-(1-2*counter),to_y)
+                    print(self.board.get_piece(f"{self.color[0]}_r_{2-counter}").final_moves())
+                    print(self.board.get_piece(f"{self.color[0]}_r_{2-counter}").move_piece(to_x-(1-2*counter),to_y))
                     break
-                counter+=1
+            counter+=1
                 
         #castling move
         return super().move_piece(to_x, to_y)
