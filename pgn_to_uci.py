@@ -28,7 +28,5 @@ def merge_txt_to_uci(input_pattern, output_file):
         for game in all_games:
             out.write(game + "\n")
 
-# Example usage:
-# Will look for all .txt files in current folder and merge them into "all_games.uci"
 merge_txt_to_uci("pgns/clean data/*.txt", "pgns/all_games_uci.txt")
 print("done")

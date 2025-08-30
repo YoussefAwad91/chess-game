@@ -1,6 +1,8 @@
 import re
 from pathlib import Path
 from typing import List
+import glob
+import os
 
 ENCODINGS = ("utf-8", "latin-1", "cp1252")
 
@@ -76,9 +78,17 @@ def clean_pgn_file(input_path, output_path, keep_move_numbers = True):
 
 
 if __name__ == "__main__":
-    # example usage
-    n=0
-    for (IN, OUT) in (("Carlsen.pgn","carlsen_games.txt"),("Nakamura.pgn","nakamura_games.txt"),("Kasparov.pgn","kasparov_games.txt"),("Nepomniachtchi.pgn","nepomniachtchi_games.txt")):
-        n += clean_pgn_file(f"pgns/raw data/{IN}", f"pgns/clean data/{OUT}", keep_move_numbers=True)
+    folder_in = "pgns/raw data"
+    folder_out = "pgns/clean data"
+    n = 0
 
-    print(f"Wrote {n} games to {OUT}")
+    pgn_files = glob.glob(os.path.join(folder_in, "*.pgn"))
+
+    for pgn_file in pgn_files:
+
+        base_name = os.path.basename(pgn_file)
+        out_file = os.path.join(folder_out, base_name.replace(".pgn", "_games.txt"))
+        
+        n += clean_pgn_file(pgn_file, out_file, keep_move_numbers=True)
+
+    print(f"Wrote {n} games to {folder_out}")
