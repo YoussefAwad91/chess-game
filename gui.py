@@ -3,7 +3,6 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtSvg import * 
 
-
 from constants import *
 from game import *
 
@@ -50,12 +49,11 @@ class GuiSquare(QWidget):
 
         #debugging                        
         if event.button() == Qt.MouseButton.RightButton: 
-            print(self.game.board.get_piece(f'{self.game.get_player_turn()[0]}_k').king_castling_moves())
-           
+            pass
+
         if event.button() == Qt.MouseButton.LeftButton:
 
             self.game.square_clicked(self.square)
-        
             if self.square.has_piece:
                 if isinstance(self.square.piece, Pawn):
                     if self.square.piece.to_promote:
@@ -63,8 +61,10 @@ class GuiSquare(QWidget):
                         dialog.exec()
                         self.square.piece.promote_pawn(dialog.choice, self.square)
             
+            self.window.captured_score_label.update_score()
+            self.update_gui_display()
+            self.window.check_end_game()
 
-        self.update_gui_display()
 
         return super().mousePressEvent(event)
     
@@ -80,7 +80,6 @@ class GuiSquare(QWidget):
                 if s.square in self.square.piece.available_squares:
                     s.overlay_renderer = QSvgRenderer(OVERLAY)
                     s.update()
-        
 
         if self.game.board.get_piece("w_k").checked:
             self.window.get_gui_square(self.game.board.get_piece("w_k").square).overlay_renderer = QSvgRenderer(CHECK_OVERLAY)
@@ -92,10 +91,11 @@ class GuiSquare(QWidget):
 
 class TimeLabel(QLabel):
     
-    def __init__(self, player):
+    def __init__(self, player,window):
         super().__init__()
         self.player = player
-        self.setStyleSheet(WHITE_STYLESHEET if self.player.color == "white" else BLACK_STYLESHEET)
+        self.window = window
+        self.setStyleSheet(WHITE_TIME_STYLESHEET if self.player.color == "white" else BLACK_TIME_STYLESHEET)
         self.setTextFormat(Qt.TextFormat.RichText)
         self.setContentsMargins(0,0,0,0)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -110,6 +110,10 @@ class TimeLabel(QLabel):
             self.setText("∞")
         else:
             current_time_seconds = self.player.clock.get_remaining_time()
+            if current_time_seconds<0:
+                self.player.game.win_by_time(self.player.game.get_player_turn())
+                self.window.check_end_game()
+
             hours, remainder = divmod(current_time_seconds, 3600)
             minutes, seconds = divmod(remainder, 60)
             seconds = int(seconds)
@@ -127,7 +131,7 @@ class PromotionDialog(QDialog):
         super().__init__()
         self.window = window
         self.choice = None
-        self.setStyleSheet(WHITE_DIALOG_STYLESHEET if window.game.get_player_turn()=="white" else BLACK_DIALOG_STYLESHEET)
+        self.setStyleSheet(WHITE_PROMOTION_STYLESHEET if window.game.get_player_turn()=="white" else BLACK_PROMOTION_STYLESHEET)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setFixedSize((QSize(300,90)))
         self.setModal(True)
@@ -202,6 +206,86 @@ class TimeFormatDialog(QDialog):
         self.window.white_time.set_current_time()
         self.window.black_time.set_current_time()
 
+class CapturedPiecesLabel(QLabel):
+    def __init__(self, window):
+        super().__init__()
+        self.window = window
+        self.update_score()
+        self.setStyleSheet(CAPTURED_SCORE_STYLESHEET)
+    
+    def get_captured_string(self, player):
+        captured_pieces_str = ""
+        for piece in player.get_captured_or_not(True):
+            captured_pieces_str+=piece.icon
+        return captured_pieces_str
+    
+    def update_score(self):
+        score = self.window.game.white_score - self.window.game.black_score
+        black_captured_text = self.get_captured_string(self.window.game.white_player) + ("+"+str(abs(score)) if score<0 else "" )
+        white_captured_text = self.get_captured_string(self.window.game.black_player) + ("+"+str(score) if score>0 else "" )
+        self.setText(f"""
+                    <span style="color:#B7C0D8;">{black_captured_text}</span>
+                    <br>
+                    <span style="color:#E8EDF9;">{white_captured_text}</span>
+                    """)
+
+class EndDialog(QDialog):
+    def __init__(self, window):
+        super().__init__()
+        self.window = window
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setFixedSize((QSize(400,180)))
+        self.setModal(True)
+        self.setStyleSheet(END_DIALOG_STYLESHEET)
+
+        master_layout = QVBoxLayout()
+        self.end_message_label = QLabel()
+        button_layout = QHBoxLayout()
+
+        save_pgn_button = QPushButton()
+        leave_button = QPushButton()
+
+        save_pgn_button.setText("Save Game")
+        leave_button.setText("Leave")
+
+        button_layout.addWidget(save_pgn_button)
+        button_layout.addWidget(leave_button)
+
+        save_pgn_button.clicked.connect(lambda: self.end_with_setting(True))
+        leave_button.clicked.connect(lambda: self.end_with_setting(False))
+        
+        master_layout.addWidget(self.end_message_label)
+        master_layout.addStretch()
+        master_layout.addLayout(button_layout)
+        master_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        master_layout.setContentsMargins(20,40,20,40)
+
+        self.setLayout(master_layout)
+
+    def set_text(self, reason, winner):
+        text = ""
+        if reason=="checkmate":
+            text = f"{winner.capitalize()} won by checkmate!"
+        elif reason=="timeout":
+            text = f"{winner.capitalize()} won by timeout!"
+        elif winner == "draw":
+            if reason == "stalemate":
+                text = "Draw by stalemate"
+            elif reason == "50moves":
+                text = "Draw by 50 move rule"
+            elif reason == "3repetitions":
+                text = "Draw by 3-fold repetiton"
+            elif reason == "material":
+                text = "Draw by insufficient material"
+        self.end_message_label.setText(text)
+    
+    def end_with_setting(self, save_flag):
+        if save_flag:
+            self.window.game.generate_save_uci(True)
+            self.window.game.save_fen()
+        self.accept()
+        self.window.close()
+        return True
 
 class MainWindow(QMainWindow):
     
@@ -210,7 +294,7 @@ class MainWindow(QMainWindow):
 
         self.show()
         self.setWindowTitle("Chess")
-        self.setFixedSize(QSize(740,650))  #for squares: width min 632, height min 624
+        self.setFixedSize(QSize(810,650))  #for squares: width min 632, height min 624
         self.move(QPoint(X_POS,Y_POS))
 
         self.game = Game()
@@ -223,11 +307,13 @@ class MainWindow(QMainWindow):
            board_layout.addWidget(s, 8-s.y_cords, s.x_cords-1)
 
         clock_layout = QVBoxLayout()
-        self.white_time = TimeLabel(self.game.white_player)
-        self.black_time = TimeLabel(self.game.black_player)
+        self.white_time = TimeLabel(self.game.white_player, self)
+        self.black_time = TimeLabel(self.game.black_player, self)
+        self.captured_score_label = CapturedPiecesLabel(self)
         clock_layout.addStretch()
         clock_layout.addWidget(self.black_time)
-        clock_layout.addStretch()
+        clock_layout.addWidget(self.captured_score_label)
+        #clock_layout.addStretch()
         clock_layout.addWidget(self.white_time)
         clock_layout.addStretch()
 
@@ -243,7 +329,7 @@ class MainWindow(QMainWindow):
         time_dialog = TimeFormatDialog(self)
         time_dialog.exec()
 
-
+        self.end_dialog = EndDialog(self)
 
     def create_gui_squares(self):
         self.gui_squares = []
@@ -260,8 +346,14 @@ class MainWindow(QMainWindow):
         for g_square in self.gui_squares:
             if g_square.x_cords == x and g_square.y_cords:
                 return g_square
+            
+    def check_end_game(self):
+        if self.game.game_ended:
+            self.end_dialog.set_text(self.game.end_reason, self.game.winner)
+            self.end_dialog.exec()
+            
+if __name__=="__main__":
 
-
-app = QApplication([])
-window = MainWindow()
-app.exec()
+    app = QApplication([])
+    window = MainWindow()
+    app.exec()

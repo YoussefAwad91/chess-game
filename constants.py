@@ -22,7 +22,7 @@ BLACK_BISHOP = "assets/pieces/black_bishop.svg"
 BLACK_QUEEN  = "assets/pieces/black_queen.svg"
 BLACK_KING   = "assets/pieces/black_king.svg"
 
-BLACK_STYLESHEET = """
+BLACK_TIME_STYLESHEET = """
             QLabel {
                 font-family: 'Roboto Mono', 'Consolas', monospace;
                 font-size: 28px;
@@ -34,7 +34,7 @@ BLACK_STYLESHEET = """
             }
         """
 
-WHITE_STYLESHEET = """
+WHITE_TIME_STYLESHEET = """
             QLabel {
                 font-family: 'Roboto Mono', 'Consolas', monospace;
                 font-size: 28px;
@@ -46,7 +46,7 @@ WHITE_STYLESHEET = """
             }
         """
 
-WHITE_DIALOG_STYLESHEET = """
+WHITE_PROMOTION_STYLESHEET = """
             QDialog {
                 background-color: #E8EDF9;
                 border-radius: 20px;   /* <--- rounded edges */
@@ -62,7 +62,7 @@ WHITE_DIALOG_STYLESHEET = """
             }
         """
 
-BLACK_DIALOG_STYLESHEET = """
+BLACK_PROMOTION_STYLESHEET = """
             QDialog {
                 background-color: #B7C0D8;
                 border-radius: 20px;   /* <--- rounded edges */
@@ -112,6 +112,44 @@ TIME_DIALOG_STYLESHEET = """
             }
         """
 
+CAPTURED_SCORE_STYLESHEET = """
+            QLabel {
+                font-size: 18px;
+                border-radius: 6px;
+                padding: 0px;
+                min-width: 150px;
+                min-height:36px;
+                letter-spacing:-6px;
+                font-family: "DejaVu Sans", "Segoe UI Symbol", monospace; /*mono for closer spacing*/
+            }
+        """
+
+END_DIALOG_STYLESHEET = """
+            QLabel {
+                color: #E8EDF9;  
+                font-size: 28px;
+                alignment: centre;
+
+            }
+            QPushButton {
+                font-family: 'Roboto Mono', 'Consolas', monospace;
+                font-size: 28px;
+                background-color: #B7C0D8;  
+                color: #E8EDF9;            
+                border-radius: 6px;
+                padding: 6px 12px;
+            }
+            QPushButton:hover {
+                background-color: #E8EDF9;  
+                color: #B7C0D8;            
+                border: 2px solid #B7C0D8;
+            }
+            QPushButton:pressed {
+                background-color: #E8EEFF;  
+                color: #B7C0D8;
+            }
+        """
+
 ##### time formats ######
 
 TIME_FORMATS = {"1 min": (60,0), "1|1": (60,1),"2|1": (120,1),"3 min": (180,0),"3|2": (180,2),"5 min": (300,0),"10 min": (600,0),"15|10": (900,10),"30 min": (1800,0), "∞":(-1,0) }
@@ -135,3 +173,10 @@ ROOK_FACTORS = [(0,1), (-1,0), (0,-1), (1,0)]
 KNIGHT_OFFSETS = [(1,2), (2,1), (-2,1), (2,-1), (-2,-1), (-1,-2), (1,-2), (-1,2)]
 KING_OFFSETS = [(0,1), (-1,1), (-1,0), (-1,-1), (0,-1), (1,-1), (1,0), (1,1)]
 PAWN_OFFSET = [(0,1),(0,2)]
+
+
+#llm_training.py
+FILES = "abcdefgh"
+RANKS = "12345678"
+PROMOTIONS = "qrbn"
+PAD = "<pad>"; SOS = "<sos>"; EOS= "<eos>"

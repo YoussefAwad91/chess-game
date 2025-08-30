@@ -2,6 +2,8 @@ from pieces import *
 from constants import *
 
 BACK_ROW = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook] # for creating pieces
+PIECE_CLASSES = {Pawn:"p", Rook:"r", Knight:"n", Bishop:"b", Queen:"q", King:"k"}
+
 
 # todo: can include different back_row for 960 format
 
@@ -14,6 +16,7 @@ class Square:
 
 class Board:
     def __init__(self,game):
+        self.fen_state = None
         self.pieces = []
         self.game = game
         self.virtual = False
@@ -62,4 +65,29 @@ class Board:
                     print("\n", end="")
                     counter =0
         print("\n")
+
+    def generate_FEN(self):
+        counter = 0
+        fen_state = ""
+        for j in range(0,8):
+            for i in range(0,8):
+                square = self.squares[i][7-j]
+                if square.has_piece and not square.piece.is_captured:
+                    if counter !=0:
+                        fen_state += str(counter)
+                        counter=0
+                    for piece_class in PIECE_CLASSES:
+                        if isinstance(square.piece, piece_class):
+                            if square.piece.color == "white":
+                                fen_state+=PIECE_CLASSES[piece_class].upper()
+                            else:
+                                fen_state+=PIECE_CLASSES[piece_class].lower()
+                else:
+                    counter+=1
+            if counter !=0:
+                fen_state += str(counter)
+            fen_state += "/"
+            counter = 0
+        self.fen_state = fen_state[:-1] #remove last backslash
+        return self.fen_state
 

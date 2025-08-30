@@ -23,6 +23,7 @@ class Piece:
                 self.board.remove_piece(self.square.x_cords, self.square.y_cords) #removing piece to be moved from intial sqaure
                 self.square = self.board.squares[to_x-1][to_y-1] #moving piece to new square
                 if self.board.squares[to_x-1][to_y-1].has_piece:
+                    self.board.game.last_pawn_or_capture = self.board.game.move_number
                     self.square.piece.is_captured = True
                     self.square.piece.square = None
                 self.board.place_piece(to_x,to_y,self)
@@ -58,9 +59,7 @@ class Piece:
                     new_available_squares.append(square)
 
             del virtual_board
-        #print("1", self.available_squares)
-        #print("2", new_available_squares)
-        #print("\n")
+
         self.available_squares = new_available_squares 
         return self.available_squares
 
@@ -225,8 +224,8 @@ class King(Piece):
         for move in self.castling:
             if move[0] != None:
                 if move[0].x_cords == to_x and move[0].y_cords == to_y:
-                    print(self.board.get_piece(f"{self.color[0]}_r_{2-counter}").final_moves())
-                    print(self.board.get_piece(f"{self.color[0]}_r_{2-counter}").move_piece(to_x-(1-2*counter),to_y))
+                    self.board.get_piece(f"{self.color[0]}_r_{2-counter}").final_moves()
+                    self.board.get_piece(f"{self.color[0]}_r_{2-counter}").move_piece(to_x-(1-2*counter),to_y)
                     break
             counter+=1
                 
@@ -293,6 +292,7 @@ class Pawn(Piece):
 
     def move_piece(self, to_x, to_y):
         if super().move_piece(to_x, to_y):
+            self.board.game.last_pawn_or_capture = self.board.game.move_number #for 50 move draw
             if not self.has_moved:
                 self.first_move = self.game.move_number
                 self.has_moved = True
