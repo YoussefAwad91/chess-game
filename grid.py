@@ -5,7 +5,7 @@ BACK_ROW = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook] # for creat
 PIECE_CLASSES = {Pawn:"p", Rook:"r", Knight:"n", Bishop:"b", Queen:"q", King:"k"}
 
 
-# todo: can include different back_row for 960 format
+# can include different back_row for 960 format
 
 class Square:
     def __init__(self, x, y, has_piece, piece=None):
